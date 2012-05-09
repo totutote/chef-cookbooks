@@ -1,0 +1,4 @@
+#Set <%= @env_name %>. Create from chef templates 
+[ -z "$<%= @env_name %>" ] && <%= @env_name %>="<%= @bin_path %>"
+export <%= @env_name %>
+export PATH=$PATH:<%= @bin_path %>/bin

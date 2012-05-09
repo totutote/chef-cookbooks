@@ -1,0 +1,31 @@
+{
+  "name": "aws-tools",
+  "description": "Installs/Configures ec2-api-tools etc",
+  "long_description": "# DESCRIPTION:\n\nawsのapi-toolをインストール\n\n# REQUIREMENTS:\n\nUbuntu 11.10でのみテスト\n\n依存関係\n\nopscode cookbook java\n\n# ATTRIBUTES:\n\n\n# USAGE:\n\n\n",
+  "maintainer": "Yu Totsuka",
+  "maintainer_email": "tty102fnio@gmail.com",
+  "license": "All rights reserved",
+  "platforms": {
+    "ubuntu": ">= 0.0.0"
+  },
+  "dependencies": {
+    "java": ">= 0.0.0"
+  },
+  "recommendations": {
+  },
+  "suggestions": {
+  },
+  "conflicting": {
+  },
+  "providing": {
+  },
+  "replacing": {
+  },
+  "attributes": {
+  },
+  "groupings": {
+  },
+  "recipes": {
+  },
+  "version": "0.0.1"
+}

@@ -1,0 +1,18 @@
+# DESCRIPTION:
+
+awsのapi-toolをインストール
+
+# REQUIREMENTS:
+
+Ubuntu 11.10でのみテスト
+
+依存関係
+
+opscode cookbook java
+
+# ATTRIBUTES:
+
+
+# USAGE:
+
+

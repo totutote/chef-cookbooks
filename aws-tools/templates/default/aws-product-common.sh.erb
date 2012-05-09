@@ -1,0 +1,11 @@
+# Set path for AWS API tools packages
+
+export AWS_PATH=/opt/aws
+#export PATH=$PATH:/opt/aws/bin
+export JAVA_HOME=<%= node[:aws_tools][:java_home] %>
+# uncomment this line to specify AWS_CREDENTIAL_FILE_PATH
+export AWS_CREDENTIAL_FILE=/etc/aws/credentials.txt
+export EC2_REGION=<%= node[:aws_tools][:resion] %>
+export EC2_URL=<%= node[:aws_tools][:url] %>
+export EC2_CERT=/etc/aws/<%= @cert_name %>
+export EC2_PRIVATE_KEY=/etc/aws/<%= @private_key_name %>

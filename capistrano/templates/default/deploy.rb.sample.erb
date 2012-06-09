@@ -1,0 +1,27 @@
+require "capistrano/ext/multistage"
+require 'capistrano_colors'
+require 'capistrano/ec2group'
+
+set :repository,  "git@bitbucket.org:sample-repo" # リポジトリを指定
+
+set :scm, :git
+# Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
+
+set :copy_strategy, :export
+set :copy_cache, true
+#set :copy_exclude, ".git/*"
+#set :copy_cache, "/tmp/caches/myapp"
+set :deploy_via, :rsync_with_remote_cache
+set :git_shallow_clone, 1
+#set :git_enable_submodules, 1
+#set :scm_verbose true
+
+# SSH settings
+#set :use_sudo, false
+#set :port, '22'
+default_run_options[:pty] = true
+ssh_options[:username] = 'deployer'
+ssh_options[:keys] = %w(/home/deployer/.ssh/id_rsa) #秘密鍵
+ssh_options[:port] = 22
+ssh_options[:forward_agent] = true
+

@@ -1,0 +1,101 @@
+# Roles
+# Replace 0.0.0.0 with your ip
+
+set :application, "appname-release"
+set :deploy_to, "/mnt/app" #デプロイ先
+set :current_dir, "www"
+set :branch, 'stable' #デプロイするブランチ
+
+set :aws_access_key_id, "<%= @aws_access_key_id %>"
+set :aws_secret_access_key, "<%= @aws_secret_access_key %>"
+set :aws_params, :region => 'ap-northeast-1'
+
+set :rsync_options, '-az --delete --delete-excluded --exclude=.git --times --bwlimit=20000'
+
+task :after_symlink do
+#  run "ln -nfs #{shared_path}/config/database.yml #{release_path}/config/database.yml"
+#  run "ln -nfs #{shared_path}/assets/ #{release_path}/public/assets"
+end
+
+#role :app, "web server here"                          # This may be the same as your `Web` server
+
+# c1.xlarge first
+group "production-WebPfEC2SecurityGroup-example", :app   # This may be the same as your `Web` server security group
+
+#role :db,  "your primary db-server here", :primary => true # This is where Rails migrations will run
+#role :db,  "your slave db-server here"
+
+# if you're still using the script/reaper helper you will need
+# these http://github.com/rails/irs_process_scripts
+
+# If you are using Passenger mod_rails uncomment this:
+namespace :deploy do
+  task :start do ; end
+  task :stop do ; end
+  task :restart, :roles => :app, :except => { :no_release => true } do
+#    run "sudo /etc/init.d/apache2 graceful"
+#    run "sleep 3"
+#    run "rm -f #{shared_path}/templates_c/*"
+     deploy.kernel_tune
+  end
+
+  task :kernel_tune, :roles => :app, :except => { :no_release => true } do
+    sudo "sysctl -w net.ipv4.tcp_tw_reuse=1"
+    sudo "sysctl -w net.ipv4.tcp_fin_timeout=15"
+    sudo "sysctl -w net.ipv4.tcp_keepalive_time=20"
+    sudo "sysctl -w net.ipv4.tcp_keepalive_probes=4"
+    sudo "sysctl -w net.ipv4.tcp_keepalive_intvl=5"
+  end
+
+  desc <<-DESC
+    Symlinks shared configuration and directories into the latest release
+    Also clear persistent and model cache and sessions and symlink for usability.
+  DESC
+  task :finalize_update do
+    run "chmod -R g+w #{latest_release}" if fetch(:group_writable, true)
+
+    stamp = Time.now.utc.strftime("%Y%m%d%H%M.%S")
+    run "sudo find #{latest_release}/libphp/tpl -exec touch -t #{stamp} {} ';'; true", :env => { "TZ" => "UTC" }
+
+    run "test -d #{shared_path}/templates_c || mkdir -p #{shared_path}/templates_c"
+    run "ln -sf #{shared_path}/templates_c #{latest_release}/libphp/tpl/templates_c"
+
+    run <<-COMMAND
+       rm -rf #{latest_release}/logs &&
+       mkdir -p #{shared_path}/log &&
+       ln -s #{shared_path}/log #{latest_release}/logs
+    COMMAND
+
+    run "mv -f #{latest_release}/libphp/common/Const.php.aws_prod #{latest_release}/libphp/common/Const.php"
+    run "mv -f #{latest_release}/libphp/common/Cache.php.aws_prod #{latest_release}/libphp/common/Cache.php"
+    run "mv -f #{latest_release}/libphp/common/NoSql.php.aws_prod #{latest_release}/libphp/common/NoSql.php"
+    run "mv -f #{latest_release}/libphp/common/Logger.php.aws_prod #{latest_release}/libphp/common/Logger.php"
+
+    run "mv -f #{latest_release}/libphp/batch/common/BatchConst.php.aws_prod #{latest_release}/libphp/batch/common/BatchConst.php"
+    run "mv -f #{latest_release}/libphp/batch/common/Logger.php.aws_prod #{latest_release}/libphp/batch/common/Logger.php"
+
+    run "mv -f #{latest_release}/htdocs/gadget.xml.aws_prod #{latest_release}/htdocs/gadget.xml"
+
+    run "sudo chmod -R 777 #{latest_release}/logs"
+
+  end
+
+  namespace :setupapp do
+    task :default do
+    end
+
+  end
+
+  namespace :setupapp do
+  end
+
+  namespace :script do
+
+    task :cronjob do
+      host = self.roles[:app].first
+      run "date", :hosts => host
+    end
+
+  end
+
+end

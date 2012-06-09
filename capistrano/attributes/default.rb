@@ -1,0 +1,5 @@
+default["capistrano"]["app_name"]    = "mainapp"
+default["capistrano"]["path"]        = "/mnt/app"
+default["capistrano"]["owner"]       = "deployer"
+default["capistrano"]["group"]       = "deployer"
+default["capistrano"]["appowner"]    = "www-data"

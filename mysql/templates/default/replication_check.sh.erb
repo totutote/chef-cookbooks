@@ -1,0 +1,37 @@
+#!/bin/bash
+PATH=$PATH:/opt/aws/SNS/bin
+
+# Set path for AWS API tools packages
+export AWS_PATH=/opt/aws
+#export PATH=$PATH:/opt/aws/bin
+export JAVA_HOME=/usr/lib/jvm/default-java/jre
+# uncomment this line to specify AWS_CREDENTIAL_FILE_PATH
+export AWS_CREDENTIAL_FILE=/etc/aws/credentials.txt
+export EC2_URL=https://ec2.ap-northeast-1.amazonaws.com
+export EC2_REGION=ap-northeast-1
+export EC2_CERT=/etc/aws/<%= @cert %>
+export EC2_PRIVATE_KEY=/etc/aws/<%= @pk %>
+
+[ -z "$AWS_SNS_HOME" ] && AWS_SNS_HOME="/opt/aws/SNS"
+export AWS_SNS_HOME
+export PATH=$PATH:/opt/aws/SNS/bin
+
+MYSQL_ROOT_PATH="##############Please input mysql root pass###################"
+SNS_TOPIC_ARN="################Please input Topic ARN#####################"
+
+###Check if slave running###
+(
+  echo "show slave status \G;" 
+) | mysql -u root -p${MYSQL_ROOT_PATH} 2>&1 | grep "Slave_IO_Running: No"
+if [ "$?" -ne "1" ]; then
+  sns-publish $SNS_TOPIC_ARN --message "durandal-slave1-DBserver　レプリケーションが切断されました。"
+  echo "Replication error" 
+fi
+
+###Check if Slave is behind master ###
+BSEC=`mysql -e 'show slave status\G' -u root -p${MYSQL_ROOT_PATH} |grep Seconds_Behind_Master |cut -d ':' -f 2`
+if [ $BSEC -ge "10" ]; then
+  sns-publish $SNS_TOPIC_ARN --message "durandal-slave1-DBserver Slave Behind Master $BSEC seconds" 
+  echo "Slave Behind Master" 
+fi
+

@@ -1,0 +1,11 @@
+#!/bin/sh -e
+
+mkdir -p /mnt/app/releases
+mkdir -p /mnt/app/shared/log
+mkdir -p /mnt/app/shared/system
+chown deployer:deployer /mnt/app
+chown deployer:deployer /mnt/app/releases
+chown deployer:deployer /mnt/app/shared
+chown www-data:deployer /mnt/app/shared/log
+chown www-data:deployer /mnt/app/shared/system
+

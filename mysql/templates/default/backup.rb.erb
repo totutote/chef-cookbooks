@@ -1,0 +1,76 @@
+Backup::Model.new(:mysql_backup, 'A backup configuration') do
+
+  database MySQL do |database|
+    database.name               = 'my_sample_mysql_db'
+    database.username           = 'my_username'
+    database.password           = 'my_password'
+    database.skip_tables        = ['logs']
+    database.additional_options = ['--single-transaction', '--quick']
+  end
+
+  archive :user_avatars do |archive|
+    archive.add '/var/apps/my_sample_app/public/avatars'
+  end
+
+  archive :logs do |archive|
+    archive.add     '/var/apps/my_sample_app/logs/production.log'
+    archive.add     '/var/apps/my_sample_app/logs/newrelic_agent.log'
+    archive.add     '/var/apps/my_sample_app/logs/other/'
+    archive.exclude '/var/apps/my_sample_app/logs/other/exclude-this.log'
+  end
+
+  encrypt_with OpenSSL do |encryption|
+    encryption.password = 'my_secret_password'
+  end
+
+  compress_with Lzma do |compression|
+    compression.best = true
+  end
+
+  store_with S3 do |s3|
+    s3.access_key_id      = '<%= @accesskeyid %>'
+    s3.secret_access_key  = '<%= @secretkey %>'
+    s3.region             = '<%= @region %>'
+    s3.bucket             = 'my_bucket/backups'
+    s3.keep               = 20
+  end
+
+  sync_with S3 do |s3|
+    s3.access_key_id     = "my_access_key_id"
+    s3.secret_access_key = "my_secret_access_key"
+    s3.bucket            = "my-bucket"
+    s3.path              = "/backups"
+    s3.mirror            = true
+
+    s3.directories do |directory|
+      directory.add "/var/apps/my_app/public/videos"
+      directory.add "/var/apps/my_app/public/music"
+    end
+  end
+
+  notify_by Mail do |mail|
+    mail.on_success = false
+    mail.on_failure = true
+
+    mail.from                 = 'sender@email.com'
+    mail.to                   = 'receiver@email.com'
+    mail.address              = 'smtp.gmail.com'
+    mail.port                 = 587
+    mail.domain               = 'your.host.name'
+    mail.user_name            = 'sender@email.com'
+    mail.password             = 'my_password'
+    mail.authentication       = 'plain'
+    mail.enable_starttls_auto = true
+  end
+
+#  notify_by Twitter do |tweet|
+#    tweet.on_success = true
+#    tweet.on_failure = true
+
+#    tweet.consumer_key       = 'my_consumer_key'
+#    tweet.consumer_secret    = 'my_consumer_secret'
+#    tweet.oauth_token        = 'my_oauth_token'
+#    tweet.oauth_token_secret = 'my_oauth_token_secret'
+  end
+
+end

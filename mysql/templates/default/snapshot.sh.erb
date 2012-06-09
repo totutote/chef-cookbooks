@@ -1,0 +1,47 @@
+# Back up volume
+
+export JAVA_HOME=/usr/lib/jvm/default-java/jre
+export EC2_HOME=/opt/aws/ec2
+export EC2_CERT=/etc/aws/<%= @cert %>
+export EC2_PRIVATE_KEY=/etc/aws/<%= @pk %>
+export EC2_URL=https://ec2.ap-northeast-1.amazonaws.com
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/opt/aws/AutoScaling/bin:/var/lib/gems/1.8/bin:/opt/aws/CloudWatch/bin:/opt/aws/ec2/bin:/opt/aws/SNS/bin
+
+instance=`curl http://169.254.169.254/latest/meta-data/instance-id`
+
+GEN_MAX=10
+MYSQL_USER="root"
+MYSQL_PW=<%= node['mysql']['server_root_password'] %>
+
+MOUNT_POINT=/mnt/mysql
+VOLUME=########volume_id########
+MYSQL_CRED="-u$MYSQL_USER -p$MYSQL_PW"
+
+mysql $MYSQL_CRED -e "FLUSH TABLES WITH READ LOCK;"
+mysql $MYSQL_CRED -Nse "show master status" > $MOUNT_POINT/lib/mysql/master_snapshot_position
+mysql $MYSQL_CRED -Nse "show slave status" > $MOUNT_POINT/lib/mysql/slave_snapshot_position
+
+fsfreeze -f $MOUNT_POINT
+ec2-create-snapshot $VOLUME
+fsfreeze -u $MOUNT_POINT
+
+mysql $MYSQL_CRED -e "UNLOCK TABLES;"
+
+echo "...delete old snapshots.";
+    snapshots=`$EC2_HOME/bin/ec2-describe-snapshots | sort -k 5 -r | awk '/'$VOLUME'/{print $2}'`
+    count=1
+    for snapshot in $snapshots;
+    do
+        if [ $count -le $GEN_MAX ];
+        then
+        echo "[keeping]" $snapshot
+
+        else
+            $EC2_HOME/bin/ec2-delete-snapshot $snapshot
+            echo $snapshot "deleted." 
+        fi
+        count=`expr $count + 1`
+    done
+
+    echo "end."
+
